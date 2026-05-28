@@ -480,17 +480,6 @@ async function getWalkingRoute(origin, destination) {
     }
     return null;
 }
-
-// 语音播报（如果你已有就复用）
-function speak(text) {
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'zh-CN';
-        u.rate = 1.2;
-        window.speechSynthesis.speak(u);
-    }
-}
         // 语音合成
         const synth = window.speechSynthesis;
         let utterance = new SpeechSynthesisUtterance();
@@ -501,25 +490,33 @@ function speak(text) {
         // 服务器地址（自动检测）
         const SERVER_URL = window.location.origin;
         
-        // ==================== 语音播报 ====================
-        function speak(text, priority = 0) {
-            if (!synth) {
-                console.log('[语音]', text);
-                return;
-            }
-            
-            // 如果正在播报，根据优先级决定是否打断
-            if (synth.speaking && priority < 1) return;
-            
-            // 取消当前播报
-            if (synth.speaking) synth.cancel();
-            
-            utterance.text = text;
-            synth.speak(utterance);
-            
-            // 同时显示在界面上
-            showAlert(text, priority === 1 ? 'danger' : 'warning');
+       // ==================== 统一语音播报 ====================
+function speak(text, priority = 0) {
+    console.log('[语音播报]', text);
+    
+    // 尝试浏览器语音合成
+    if ('speechSynthesis' in window && window.speechSynthesis) {
+        try {
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'zh-CN';
+            u.rate = 1.2;
+            u.pitch = 1.0;
+            u.volume = 1.0;
+            window.speechSynthesis.speak(u);
+        } catch (e) {
+            console.error('语音播报失败:', e);
         }
+    }
+    
+    // 震动提醒（高优先级障碍物）
+    if (priority === 1 && 'vibrate' in navigator) {
+        navigator.vibrate([200, 100, 200]);
+    }
+    
+    // 同时显示在界面上
+    showAlert(text, priority === 1 ? 'danger' : 'warning');
+}
         
         // ==================== 显示警报 ====================
         function showAlert(text, type = 'info') {
