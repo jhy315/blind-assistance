@@ -1,31 +1,34 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 盲人出行辅助系统 - Web版后端
 功能：接收图片进行YOLO检测，返回结果
 """
 
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import numpy as np
 import base64
 import time
 import os
-import sys
 
 app = Flask(__name__)
 CORS(app)
+
+# 全局变量，延迟加载
 model = None
+
 def get_model():
-    """延迟加载模型"""
+    """延迟加载模型，避免启动时崩溃"""
     global model
     if model is None:
         import cv2
-        from ultralytics import YLO
-        print("[模型加载] 正在加载 YOLOv8...")
+        from ultralytics import YOLO
+        print("[模型加载] 正在加载 YOLOv8n...")
         model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "yolov8n.pt")
         model = YOLO(model_path)
         print("[模型加载] 成功")
     return model
+
 # 障碍物分类
 BARRIERS = {
     "car", "truck", "bus", "bicycle", "motorcycle",
@@ -75,16 +78,21 @@ def get_direction(frame_width, center_x):
 
 @app.route('/')
 def index():
-    """返回前端页面"""
-    return app.send_static_file('index.html')
+    """返回简单首页"""
+    return """
+    <h1>盲人出行辅助系统</h1>
+    <p>服务运行正常！</p>
+    <p>接口地址: POST /detect</p>
+    <p>健康检查: GET /health</p>
+    """
 
 
-@app.route('/detect', methods=['POST'])
 @app.route('/detect', methods=['POST'])
 def detect():
-    """接收图片，返回检测结果"""   # 文档字符串放这里！
-    model = get_model()           # 然后才是代码
-    import cv2                    # 在这里也导入 cv2
+    """接收图片，返回检测结果"""
+    import cv2
+    model = get_model()
+    
     try:
         data = request.json
         if not data or 'image' not in data:
@@ -164,9 +172,7 @@ def detect():
 def health():
     """健康检查"""
     return jsonify({"status": "ok", "model_loaded": model is not None})
-    # 0.0.0.0 允许外部设备访问
-    app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
-    import os
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
