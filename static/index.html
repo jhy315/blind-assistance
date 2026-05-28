@@ -387,11 +387,25 @@ async function requestPermission() {
             overlay.style.display = 'none';  // 直接修改样式
             overlay.classList.add('hidden');
         }
+    }
+}
+     // ==================== 启动摄像头 ====================
+async function startCamera() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' }
+        });
         
-        // 启动摄像头
-        startCamera();
+        const video = document.getElementById('video');
+        video.srcObject = stream;
+        await video.play();
+        
+        isRunning = true;
+        detectLoop();
+        
     } catch (err) {
-        alert('无法访问摄像头：' + err.message);
+        console.error('启动摄像头失败:', err);
+        alert('摄像头启动失败：' + err.message);
     }
 }
         // 尝试浏览器语音合成
