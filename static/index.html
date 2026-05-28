@@ -385,6 +385,29 @@
          alert('无法访问摄像头：' + err.message);
      }
  }
+        // 尝试浏览器语音合成
+    if ('speechSynthesis' in window && window.speechSynthesis) {
+        try {
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'zh-CN';
+            u.rate = 1.2;
+            u.pitch = 1.0;
+            u.volume = 1.0;
+            window.speechSynthesis.speak(u);
+        } catch (e) {
+            console.error('语音播报失败:', e);
+        }
+    }
+    
+    // 震动提醒（高优先级障碍物）
+    if (priority === 1 && 'vibrate' in navigator) {
+        navigator.vibrate([200, 100, 200]);
+    }
+    
+    // 同时显示在界面上
+    showAlert(text, priority === 1 ? 'danger' : 'warning');
+}
         // ========== 导航配置 ==========
 const AMAP_KEY = "4b865065e482de4e7ae3646224c6c5d2";
 // ========== 启动导航 ==========
@@ -480,43 +503,9 @@ async function getWalkingRoute(origin, destination) {
     }
     return null;
 }
-        // 语音合成
-        const synth = window.speechSynthesis;
-        let utterance = new SpeechSynthesisUtterance();
-        utterance.lang = 'zh-CN';
-        utterance.rate = 1.1;
-        utterance.pitch = 1.0;
-        
         // 服务器地址（自动检测）
         const SERVER_URL = window.location.origin;
-        
-       // ==================== 统一语音播报 ====================
-function speak(text, priority = 0) {
-    console.log('[语音播报]', text);
-    
-    // 尝试浏览器语音合成
-    if ('speechSynthesis' in window && window.speechSynthesis) {
-        try {
-            window.speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(text);
-            u.lang = 'zh-CN';
-            u.rate = 1.2;
-            u.pitch = 1.0;
-            u.volume = 1.0;
-            window.speechSynthesis.speak(u);
-        } catch (e) {
-            console.error('语音播报失败:', e);
-        }
-    }
-    
-    // 震动提醒（高优先级障碍物）
-    if (priority === 1 && 'vibrate' in navigator) {
-        navigator.vibrate([200, 100, 200]);
-    }
-    
-    // 同时显示在界面上
-    showAlert(text, priority === 1 ? 'danger' : 'warning');
-}
+
         
         // ==================== 显示警报 ====================
         function showAlert(text, type = 'info') {
@@ -543,7 +532,6 @@ function speak(text, priority = 0) {
             while (alertsDiv.children.length > 5) {
                 alertsDiv.removeChild(alertsDiv.lastChild);
             }
-            
             // 5秒后自动移除
             setTimeout(() => {
                 if (alert.parentNode) alert.parentNode.removeChild(alert);
