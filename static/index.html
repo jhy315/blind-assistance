@@ -374,17 +374,26 @@
         let detectInterval = 200; // 检测间隔
         let animationId = null;
          // ==================== 请求权限 ====================
- async function requestPermission() {
-     try {
-         const testStream = await navigator.mediaDevices.getUserMedia({
-             video: { facingMode: 'environment' }
-         });
-         testStream.getTracks().forEach(t => t.stop());
-         permissionOverlay.classList.add('hidden');
-     } catch (err) {
-         alert('无法访问摄像头：' + err.message);
-     }
- }
+async function requestPermission() {
+    try {
+        const testStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' }
+        });
+        testStream.getTracks().forEach(t => t.stop());
+        
+        // 强制隐藏覆盖层
+        const overlay = document.getElementById('permissionOverlay');
+        if (overlay) {
+            overlay.style.display = 'none';  // 直接修改样式
+            overlay.classList.add('hidden');
+        }
+        
+        // 启动摄像头
+        startCamera();
+    } catch (err) {
+        alert('无法访问摄像头：' + err.message);
+    }
+}
         // 尝试浏览器语音合成
         const synth = window.speechSynthesis;
     function speak(text, priority = 0) {
