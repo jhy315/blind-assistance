@@ -386,6 +386,7 @@
      }
  }
         // 尝试浏览器语音合成
+        const synth = window.speechSynthesis;
     function speak(text, priority = 0) {
     if ('speechSynthesis' in window && window.speechSynthesis) {
         try {
