@@ -80,9 +80,11 @@ def index():
 
 
 @app.route('/detect', methods=['POST'])
+@app.route('/detect', methods=['POST'])
 def detect():
-      model = get_model()
-    """接收图片，返回检测结果"""
+    """接收图片，返回检测结果"""   # 文档字符串放这里！
+    model = get_model()           # 然后才是代码
+    import cv2                    # 在这里也导入 cv2
     try:
         data = request.json
         if not data or 'image' not in data:
@@ -162,37 +164,6 @@ def detect():
 def health():
     """健康检查"""
     return jsonify({"status": "ok", "model_loaded": model is not None})
-
-
-if __name__ == '__main__':
-    import socket
-    
-    def get_local_ip():
-        """获取本机局域网IP"""
-        try:
-            # 方法1：通过UDP连接获取
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            ip = s.getsockname()[0]
-            s.close()
-            return ip
-        except:
-            # 方法2：通过主机名获取
-            return socket.gethostbyname(socket.gethostname())
-    
-    local_ip = get_local_ip()
-    
-    print("=" * 50)
-    print("  盲人出行辅助系统 - Web版")
-    print("=" * 50)
-    print("服务器启动，访问地址：")
-    print(f"  本机:     http://127.0.0.1:5000")
-    print(f"  局域网:   http://{local_ip}:5000")
-    print("=" * 50)
-    print("手机请连接同一WiFi，访问上述局域网地址")
-    print("按 CTRL+C 停止服务器")
-    print("=" * 50)
-    
     # 0.0.0.0 允许外部设备访问
     app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
     import os
