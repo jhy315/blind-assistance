@@ -1,7 +1,5 @@
-flask
+flask==3.0.0
+flask-cors
+opencv-python==4.9.0
+numpy==1.26.0
 ultralytics
-opencv-python
-numpy
-Pillow
-requests
-torch
