@@ -6,8 +6,6 @@
 
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-from ultralytics import YOLO
-import cv2
 import numpy as np
 import base64
 import time
@@ -16,16 +14,18 @@ import sys
 
 app = Flask(__name__)
 CORS(app)
-from ultralytics import YOLO
-
-# 自动下载到本地缓存
-model = YOLO('yolov8n.pt')
-# 加载模型
-print("[模型加载] 正在加载 YOLOv8n...")
-model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "yolov8n.pt")
-model = YOLO(model_path)
-print("[模型加载] 成功")
-
+model = None
+def get_model():
+    """延迟加载模型"""
+    global model
+    if model is None:
+        import cv2
+        from ultralytics import YLO
+        print("[模型加载] 正在加载 YOLOv8...")
+        model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "yolov8n.pt")
+        model = YOLO(model_path)
+        print("[模型加载] 成功")
+    return model
 # 障碍物分类
 BARRIERS = {
     "car", "truck", "bus", "bicycle", "motorcycle",
@@ -81,6 +81,7 @@ def index():
 
 @app.route('/detect', methods=['POST'])
 def detect():
+      model = get_model()
     """接收图片，返回检测结果"""
     try:
         data = request.json
