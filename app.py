@@ -16,7 +16,10 @@ import sys
 
 app = Flask(__name__)
 CORS(app)
+from ultralytics import YOLO
 
+# 自动下载到本地缓存
+model = YOLO('yolov8n.pt')
 # 加载模型
 print("[模型加载] 正在加载 YOLOv8n...")
 model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "yolov8n.pt")
@@ -191,3 +194,8 @@ if __name__ == '__main__':
     
     # 0.0.0.0 允许外部设备访问
     app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
+    import os
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
