@@ -83,9 +83,7 @@ def index():
 @app.route('/detect', methods=['POST'])
 def detect():
     """接收图片，返回检测结果"""
-    import cv2
     model = get_model()
-    
     try:
         data = request.json
         if not data or 'image' not in data:
