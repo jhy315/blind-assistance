@@ -408,6 +408,7 @@ async function startCamera() {
         alert('摄像头启动失败：' + err.message);
     }
 }
+        window.startCamera = startCamera;
         // 尝试浏览器语音合成
         const synth = window.speechSynthesis;
     function speak(text, priority = 0) {
