@@ -78,15 +78,8 @@ def get_direction(frame_width, center_x):
 
 @app.route('/')
 def index():
-    """返回简单首页"""
-    return """
-    <h1>盲人出行辅助系统</h1>
-    <p>服务运行正常！</p>
-    <p>接口地址: POST /detect</p>
-    <p>健康检查: GET /health</p>
-    """
-
-
+    """返回前端页面"""
+    return app.send_static_file('index.html')
 @app.route('/detect', methods=['POST'])
 def detect():
     """接收图片，返回检测结果"""
