@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>盲人出行辅助系统</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0a0a1a;
+            color: #fff;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* 头部 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 26, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .header .status {
+            font-size: 12px;
+            color: #00ff88;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00ff88;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        /* 摄像头区域 */
+        .camera-container {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            right: 0;
+            bottom: 180px;
+            background: #000;
+            overflow: hidden;
+        }
+        
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+        
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        /* 控制栏 */
+        .controls {
+            position: fixed;
+            bottom: 100px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            padding: 0 20px;
+            z-index: 100;
+        }
+        
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-start {
+            background: linear-gradient(135deg, #00ff88, #00cc6a);
+            color: #000;
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+        }
+        
+        .btn-stop {
+            background: linear-gradient(135deg, #ff4757, #cc3845);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+        }
+        
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        
+        /* 警报区域 */
+        .alerts {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: rgba(10, 10, 26, 0.98);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding: 12px 16px;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        
+        .alert {
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 500;
+            animation: slideIn 0.4s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-30px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .alert-danger {
+            background: rgba(255, 71, 87, 0.15);
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            color: #ff6b81;
+        }
+        
+        .alert-warning {
+            background: rgba(255, 165, 2, 0.15);
+            border: 1px solid rgba(255, 165, 2, 0.3);
+            color: #ffc107;
+        }
+        
+        .alert-info {
+            background: rgba(55, 66, 250, 0.15);
+            border: 1px solid rgba(55, 66, 250, 0.3);
+            color: #70a1ff;
+        }
+        
+        .alert-success {
+            background: rgba(0, 255, 136, 0.15);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            color: #00ff88;
+        }
+        
+        /* 统计信息 */
+        .stats {
+            position: fixed;
+            top: 70px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #aaa;
+            z-index: 50;
+        }
+        
+        /* 设置面板 */
+        .settings {
+            position: fixed;
+            top: 70px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 8px;
+            z-index: 50;
+            font-size: 12px;
+        }
+        
+        .settings label {
+            display: block;
+            margin-bottom: 6px;
+            color: #aaa;
+        }
+        
+        .settings input[type="range"] {
+            width: 100px;
+        }
+        
+        /* 加载动画 */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: #00ff88;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 提示层 */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 20px;
+        }
+        
+        .overlay-content {
+            text-align: center;
+            max-width: 300px;
+        }
+        
+        .overlay-content h2 {
+            margin-bottom: 16px;
+            font-size: 22px;
+        }
+        
+        .overlay-content p {
+            color: #aaa;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* 响应式 */
+        @media (min-width: 768px) {
+            .camera-container {
+                top: 80px;
+                bottom: 160px;
+            }
+            .alerts {
+                height: 120px;
+            }
+            .controls {
+                bottom: 130px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 头部 -->
+    <div class="header">
+        <h1>🎯 盲人出行辅助系统</h1>
+        <div class="status" id="status">
+            <span class="status-dot"></span>
+            <span>点击"开启摄像头"开始检测</span>
+        </div>
+    </div>
+    
+    <!-- 统计 -->
+    <div class="stats" id="stats">
+        FPS: 0 | 检测: 0
+    </div>
+    
+    <!-- 设置 -->
+    <div class="settings">
+        <label>检测间隔: <span id="intervalValue">200</span>ms</label>
+        <input type="range" id="intervalRange" min="100" max="1000" value="200" step="50">
+    </div>
+    
+    <!-- 摄像头区域 -->
+    <div class="camera-container">
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="canvas"></canvas>
+        <div class="loading hidden" id="loading">
+            <div class="loading-spinner"></div>
+            <p>正在初始化...</p>
+        </div>
+    </div>
+    
+    <!-- 控制按钮 -->
+    <div class="controls">
+        <button class="btn btn-start" id="btnStart" onclick="startCamera()">
+            ▶️ 开启摄像头
+        </button>
+        <button class="btn btn-stop" id="btnStop" onclick="stopCamera()" disabled>
+            ⏹️ 停止检测
+        </button>
+    </div>
+    
+    <!-- 警报区域 -->
+    <div class="alerts" id="alerts"></div>
+    
+    <!-- 权限提示 -->
+    <div class="overlay" id="permissionOverlay">
+        <div class="overlay-content">
+            <h2>📷 需要摄像头权限</h2>
+            <p>本应用需要访问您的摄像头来进行实时障碍物检测。请点击下方按钮授权访问。</p>
+            <button class="btn btn-start" onclick="requestPermission()">授权访问摄像头</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 全局变量 ====================
+        let video = document.getElementById('video');
+        let canvas = document.getElementById('canvas');
+        let ctx = canvas.getContext('2d');
+        let btnStart = document.getElementById('btnStart');
+        let btnStop = document.getElementById('btnStop');
+        let status = document.getElementById('status');
+        let alertsDiv = document.getElementById('alerts');
+        let statsDiv = document.getElementById('stats');
+        let loading = document.getElementById('loading');
+        let permissionOverlay = document.getElementById('permissionOverlay');
+        let intervalRange = document.getElementById('intervalRange');
+        let intervalValue = document.getElementById('intervalValue');
+        
+        let stream = null;
+        let isRunning = false;
+        let frameCount = 0;
+        let lastAlertTime = {};
+        let alertGap = 5000; // 警报间隔5秒
+        let detectInterval = 200; // 检测间隔
+        let animationId = null;
+         // ==================== 请求权限 ====================
+ async function requestPermission() {
+     try {
+         const testStream = await navigator.mediaDevices.getUserMedia({
+             video: { facingMode: 'environment' }
+         });
+         testStream.getTracks().forEach(t => t.stop());
+         permissionOverlay.classList.add('hidden');
+     } catch (err) {
+         alert('无法访问摄像头：' + err.message);
+     }
+ }
+        // ========== 导航配置 ==========
+const AMAP_KEY = "4b865065e482de4e7ae3646224c6c5d2";
+// ========== 启动导航 ==========
+async function startNavigation() {
+    const dest = prompt("请输入目的地：");
+    if (!dest) return;
+    
+    speak("正在规划路线");
+    
+    try {
+        // 1. 获取当前GPS坐标
+        const pos = await getGPS();
+        const origin = `${pos.longitude},${pos.latitude}`;
+        
+        // 2. 目的地转坐标（地理编码）
+        const destCoord = await geocode(dest);
+        if (!destCoord) {
+            speak("找不到该目的地");
+            return;
+        }
+        
+        // 3. 步行路径规划（直接调高德API）
+        const route = await getWalkingRoute(origin, destCoord);
+        if (!route) {
+            speak("路线规划失败");
+            return;
+        }
+        
+        // 4. 播报并开始导航
+        const min = Math.round(route.duration / 60);
+        speak(`导航开始，全程${route.distance}米，预计${min}分钟`);
+        
+        // 逐段播报
+        route.steps.forEach((step, i) => {
+            setTimeout(() => {
+                speak(`${step.instruction}，${step.distance}米`);
+            }, i * 8000);
+        });
+        
+    } catch (err) {
+        speak("导航失败");
+        console.error(err);
+    }
+}
+
+// 获取GPS位置
+function getGPS() {
+    return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+            pos => resolve(pos.coords),
+            err => reject(err),
+            {enableHighAccuracy: true, maximumAge: 10000}
+        );
+    });
+}
+
+// 地址转坐标（地理编码）
+async function geocode(address) {
+    const url = `https://restapi.amap.com/v3/geocode/geo?address=${encodeURIComponent(address)}&key=${AMAP_KEY}&output=json`;
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.status === '1' && data.geocodes && data.geocodes[0]) {
+            return data.geocodes[0].location;  // "lng,lat"
+        }
+    } catch(e) {
+        console.error('地理编码失败', e);
+    }
+    return null;
+}
+
+// 步行路径规划
+async function getWalkingRoute(origin, destination) {
+    const url = `https://restapi.amap.com/v3/direction/walking?origin=${origin}&destination=${destination}&key=${AMAP_KEY}&output=json`;
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.status === '1' && data.route && data.route.paths && data.route.paths[0]) {
+            const path = data.route.paths[0];
+            return {
+                distance: path.distance,
+                duration: path.duration,
+                steps: path.steps.map(s => ({
+                    instruction: s.instruction,
+                    distance: s.distance,
+                    road: s.road || '',
+                    action: s.action || ''
+                }))
+            };
+        }
+    } catch(e) {
+        console.error('路径规划失败', e);
+    }
+    return null;
+}
+
+// 语音播报（如果你已有就复用）
+function speak(text) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'zh-CN';
+        u.rate = 1.2;
+        window.speechSynthesis.speak(u);
+    }
+}
+        // 语音合成
+        const synth = window.speechSynthesis;
+        let utterance = new SpeechSynthesisUtterance();
+        utterance.lang = 'zh-CN';
+        utterance.rate = 1.1;
+        utterance.pitch = 1.0;
+        
+        // 服务器地址（自动检测）
+        const SERVER_URL = window.location.origin;
+        
+        // ==================== 语音播报 ====================
+        function speak(text, priority = 0) {
+            if (!synth) {
+                console.log('[语音]', text);
+                return;
+            }
+            
+            // 如果正在播报，根据优先级决定是否打断
+            if (synth.speaking && priority < 1) return;
+            
+            // 取消当前播报
+            if (synth.speaking) synth.cancel();
+            
+            utterance.text = text;
+            synth.speak(utterance);
+            
+            // 同时显示在界面上
+            showAlert(text, priority === 1 ? 'danger' : 'warning');
+        }
+        
+        // ==================== 显示警报 ====================
+        function showAlert(text, type = 'info') {
+            const now = Date.now();
+            const key = text.substring(0, 20); // 取前20字作为key
+            
+            if (lastAlertTime[key] && now - lastAlertTime[key] < alertGap) return;
+            lastAlertTime[key] = now;
+            
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            
+            const icons = {
+                danger: '⚠️',
+                warning: '🔔',
+                info: 'ℹ️',
+                success: '✅'
+            };
+            
+            alert.innerHTML = `<span>${icons[type] || 'ℹ️'}</span><span>${text}</span>`;
+            alertsDiv.insertBefore(alert, alertsDiv.firstChild);
+            
+            // 最多保留5条
+            while (alertsDiv.children.length > 5) {
+                alertsDiv.removeChild(alertsDiv.lastChild);
+            }
+            
+            // 5秒后自动移除
+            setTimeout(() => {
+                if (alert.parentNode) alert.parentNode.removeChild(alert);
+            }, 8000);
+        }
+        
+       
+        
+        // ==================== 开启摄像头 ====================
+        async function startCamera() {
+            try {
+                loading.classList.remove('hidden');
+                status.innerHTML = '<span class="status-dot"></span><span>正在启动摄像头...</span>';
+                
+                const constraints = {
+                    video: {
+                        facingMode: 'environment', // 后置摄像头
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    },
+                    audio: false
+                };
+                
+                // iOS Safari 需要特殊处理
+                if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                    constraints.video.facingMode = 'user'; // iOS 先用前置
+                }
+                
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                
+                await new Promise((resolve) => {
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        resolve();
+                    };
+                });
+                
+                // 设置canvas尺寸
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
+                
+                btnStart.disabled = true;
+                btnStop.disabled = false;
+                loading.classList.add('hidden');
+                status.innerHTML = '<span class="status-dot"></span><span>✅ 检测中...</span>';
+                
+                isRunning = true;
+                frameCount = 0;
+                
+                // 开始检测循环
+                detectLoop();
+                
+                speak('摄像头已启动，开始障碍物检测');
+                
+            } catch (err) {
+                loading.classList.add('hidden');
+                status.innerHTML = '<span style="color:#ff4757">●</span><span>启动失败</span>';
+                showAlert('摄像头启动失败：' + err.message, 'danger');
+                console.error(err);
+            }
+        }
+        
+        // ==================== 停止检测 ====================
+        function stopCamera() {
+            isRunning = false;
+            
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            
+            video.srcObject = null;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            btnStart.disabled = false;
+            btnStop.disabled = true;
+            status.innerHTML = '<span class="status-dot"></span><span>已停止</span>';
+            
+            speak('检测已停止');
+        }
+        
+        // ==================== 检测循环 ====================
+        async function detectLoop() {
+            if (!isRunning) return;
+            
+            const startTime = performance.now();
+            
+            try {
+                // 绘制视频帧到canvas
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                // 压缩图片发送
+                const imageData = canvas.toDataURL('image/jpeg', 0.7);
+                
+                // 发送检测请求
+                const response = await fetch(`${SERVER_URL}/detect`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: imageData })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    drawDetections(result.detections);
+                    handleAlerts(result.detections);
+                }
+                
+            } catch (err) {
+                console.error('检测错误:', err);
+            }
+            
+            // 计算FPS
+            const fps = Math.round(1000 / (performance.now() - startTime));
+            frameCount++;
+            statsDiv.textContent = `FPS: ${fps} | 检测: ${frameCount}`;
+            
+            // 按设定间隔继续
+            setTimeout(() => {
+                if (isRunning) {
+                    animationId = requestAnimationFrame(detectLoop);
+                }
+            }, detectInterval);
+        }
+        
+        // ==================== 绘制检测结果 ====================
+        function drawDetections(detections) {
+            // 清除之前的绘制（保留视频帧）
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // 绘制分区线
+            const leftX = canvas.width * 0.35;
+            const rightX = canvas.width * 0.65;
+            ctx.strokeStyle = 'rgba(128,128,128,0.5)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(leftX, 0); ctx.lineTo(leftX, canvas.height);
+            ctx.moveTo(rightX, 0); ctx.lineTo(rightX, canvas.height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // 绘制每个检测结果
+            detections.forEach(det => {
+                const [x1, y1, x2, y2] = det.bbox;
+                
+                // 颜色
+                let color;
+                if (det.alert_type === 'barrier') color = '#ff4757';
+                else if (det.alert_type === 'person') color = '#3742fa';
+                else if (det.alert_type === 'crossing') color = '#ffa502';
+                else color = '#70a1ff';
+                
+                // 检测框
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3;
+                ctx.strokeRect(x1, y1, x2-x1, y2-y1);
+                
+                // 标签背景
+                const label = `${det.name} ${det.confidence} ${det.distance}`;
+                ctx.font = 'bold 16px sans-serif';
+                const textWidth = ctx.measureText(label).width;
+                
+                ctx.fillStyle = color;
+                ctx.fillRect(x1, y1-28, textWidth + 16, 28);
+                
+                // 标签文字
+                ctx.fillStyle = '#fff';
+                ctx.fillText(label, x1+8, y1-8);
+                
+                // 中心点
+                ctx.fillStyle = '#00ff88';
+                ctx.beginPath();
+                ctx.arc((x1+x2)/2, (y1+y2)/2, 6, 0, Math.PI*2);
+                ctx.fill();
+            });
+        }
+        
+        // ==================== 处理警报 ====================
+        function handleAlerts(detections) {
+            const now = Date.now();
+            
+            detections.forEach(det => {
+                if (det.alert_type === 'none') return;
+                
+                const key = det.alert_type + det.direction;
+                if (now - (lastAlertTime[key] || 0) < alertGap) return;
+                
+                let msg = '';
+                let priority = 0;
+                
+                if (det.alert_type === 'barrier') {
+                    if (det.distance === '近距离') {
+                        msg = `注意！${det.direction}有${det.name}，请立即避让`;
+                        priority = 1;
+                    } else if (det.distance === '中距离') {
+                        msg = `${det.direction}有${det.name}，请小心`;
+                    }
+                } else if (det.alert_type === 'person') {
+                    if (det.distance === '近距离') {
+                        msg = `${det.direction}有行人靠近，请注意`;
+                        priority = 1;
+                    }
+                } else if (det.alert_type === 'crossing') {
+                    msg = '前方路口，请注意来往车辆';
+                    priority = 1;
+                }
+                
+                if (msg) {
+                    lastAlertTime[key] = now;
+                    speak(msg, priority);
+                }
+            });
+        }
+        
+        // ==================== 设置监听 ====================
+        intervalRange.addEventListener('input', (e) => {
+            detectInterval = parseInt(e.target.value);
+            intervalValue.textContent = detectInterval;
+        });
+        
+        // ==================== 页面加载完成 ====================
+        window.onload = () => {
+            // 检查浏览器支持
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showAlert('您的浏览器不支持摄像头访问，请使用 Chrome 或 Safari', 'danger');
+                return;
+            }
+            
+            // iOS需要用户交互才能播放
+            if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                video.setAttribute('playsinline', 'true');
+                video.setAttribute('webkit-playsinline', 'true');
+            }
+            
+            // 预加载语音
+            if (synth) {
+                utterance.text = ' ';
+                synth.speak(utterance);
+                synth.cancel();
+            }
+        };
+        
+        // 页面关闭时清理
+        window.onbeforeunload = () => {
+            stopCamera();
+        };
+    </script>
+    <!-- 底部固定操作栏 -->
+<div id="bottomBar" style="
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.8);
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 1000;
+">
+    <button onclick="startNavigation()" style="
+        flex: 1;
+        margin: 0 10px;
+        padding: 16px;
+        background: #0088ff;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 18px;
+        font-weight: bold;
+    ">🧭 语音导航</button>
+
+     <button onclick="startCamera()" style="
+        flex: 1;
+        margin: 0 10px;
+        padding: 16px;
+        background: #00ff88;
+        color: #000;
+        border: none;
+        border-radius: 12px;
+        font-size: 18px;
+        font-weight: bold;
+    ">📷 开启检测</button>
+</div>
+</body>
+</html>
