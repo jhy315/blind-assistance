@@ -798,8 +798,8 @@ async function getWalkingRoute(origin, destination) {
                 video.setAttribute('playsinline', 'true');
                 video.setAttribute('webkit-playsinline', 'true');
             }
-            const cameraBtn = document.getElementById('cameraBtn'); // 换成你按钮实际的 ID
-            if (cameraBtn) {
+       const cameraBtn = document.getElementById('startCameraBtn');
+if (cameraBtn) {
     cameraBtn.addEventListener('click', startCamera);
 }
             // 预加载语音
