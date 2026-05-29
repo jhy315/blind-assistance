@@ -331,14 +331,9 @@
     
     <!-- 控制按钮 -->
     <div class="controls">
-        <button class="btn btn-start" id="btnStart" onclick="startCamera()">
-            ▶️ 开启摄像头
-        </button>
-        <button class="btn btn-stop" id="btnStop" onclick="stopCamera()" disabled>
-            ⏹️ 停止检测
-        </button>
+     <button class="btn btn-start" id="btnStart">▶️ 开启摄像头</button>
+     <button class="btn btn-stop" id="btnStop" disabled>⏹️ 停止检测</button>
     </div>
-    
     <!-- 警报区域 -->
     <div class="alerts" id="alerts"></div>
     
@@ -347,7 +342,7 @@
         <div class="overlay-content">
             <h2>📷 需要摄像头权限</h2>
             <p>本应用需要访问您的摄像头来进行实时障碍物检测。请点击下方按钮授权访问。</p>
-            <button class="btn btn-start" onclick="startCamera()">授权访问摄像头</button>
+        <button class="btn btn-start" id="permissionBtn">授权访问摄像头</button>
         </div>
     </div>
 
@@ -381,34 +376,16 @@ async function requestPermission() {
         });
         testStream.getTracks().forEach(t => t.stop());
         
-        // 强制隐藏覆盖层
         const overlay = document.getElementById('permissionOverlay');
         if (overlay) {
-            overlay.style.display = 'none';  // 直接修改样式
+            overlay.style.display = 'none';
             overlay.classList.add('hidden');
         }
-    }
-}
-     // ==================== 启动摄像头 ====================
-async function startCamera() {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment' }
-        });
-        
-        const video = document.getElementById('video');
-        video.srcObject = stream;
-        await video.play();
-        
-        isRunning = true;
-        detectLoop();
-        
     } catch (err) {
-        console.error('启动摄像头失败:', err);
-        alert('摄像头启动失败：' + err.message);
+        console.error('请求权限失败:', err);
+        alert('无法获取摄像头权限');
     }
 }
-        window.startCamera = startCamera;
         // 尝试浏览器语音合成
         const synth = window.speechSynthesis;
     function speak(text, priority = 0) {
@@ -786,29 +763,37 @@ async function getWalkingRoute(origin, destination) {
         });
         
         // ==================== 页面加载完成 ====================
-        window.onload = () => {
-            // 检查浏览器支持
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                showAlert('您的浏览器不支持摄像头访问，请使用 Chrome 或 Safari', 'danger');
-                return;
-            }
-            
-            // iOS需要用户交互才能播放
-            if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-                video.setAttribute('playsinline', 'true');
-                video.setAttribute('webkit-playsinline', 'true');
-            }
-       const cameraBtn = document.getElementById('startCameraBtn');
-if (cameraBtn) {
-    cameraBtn.addEventListener('click', startCamera);
-}
-            // 预加载语音
-            if (synth) {
-                utterance.text = ' ';
-                synth.speak(utterance);
-                synth.cancel();
-            }
-        };
+window.onload = () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showAlert('您的浏览器不支持摄像头访问，请使用 Chrome 或 Safari', 'danger');
+        return;
+    }
+    
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+        video.setAttribute('playsinline', 'true');
+        video.setAttribute('webkit-playsinline', 'true');
+    }
+    
+    // 绑定按钮事件
+    const btnStart = document.getElementById('btnStart');
+    const btnStop = document.getElementById('btnStop');
+    const cameraBtn = document.getElementById('startCameraBtn');
+    const navBtn = document.getElementById('navBtn');
+    const permissionBtn = document.getElementById('permissionBtn');
+    
+    if (btnStart) btnStart.addEventListener('click', startCamera);
+    if (btnStop) btnStop.addEventListener('click', stopCamera);
+    if (cameraBtn) cameraBtn.addEventListener('click', startCamera);
+    if (navBtn) navBtn.addEventListener('click', startNavigation);
+    if (permissionBtn) permissionBtn.addEventListener('click', requestPermission);
+    
+    // 预加载语音
+    if (synth) {
+        const u = new SpeechSynthesisUtterance(' ');
+        synth.speak(u);
+        synth.cancel();
+    }
+};
         
         // 页面关闭时清理
         window.onbeforeunload = () => {
@@ -828,18 +813,17 @@ if (cameraBtn) {
     align-items: center;
     z-index: 1000;
 ">
-    <button onclick="startNavigation()" style="
-        flex: 1;
-        margin: 0 10px;
-        padding: 16px;
-        background: #0088ff;
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-size: 18px;
-        font-weight: bold;
-    ">🧭 语音导航</button>
-
+<button id="navBtn" style="
+    flex: 1;
+    margin: 0 10px;
+    padding: 16px;
+    background: #0088ff;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: bold;
+">🧭 语音导航</button>
    <button id="startCameraBtn" style="
     flex: 1;
     margin: 0 10px;
