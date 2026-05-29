@@ -560,7 +560,6 @@ async function getWalkingRoute(origin, destination) {
                 
                 // iOS Safari 需要特殊处理
                 if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-                    constraints.video.facingMode = 'user'; // iOS 先用前置
                 }
                 
                 stream = await navigator.mediaDevices.getUserMedia(constraints);
