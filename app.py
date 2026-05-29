@@ -10,7 +10,7 @@ import numpy as np
 import base64
 import time
 import os
-
+import cv2
 app = Flask(__name__)
 CORS(app)
 
