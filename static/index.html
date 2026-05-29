@@ -366,7 +366,7 @@
         let frameCount = 0;
         let lastAlertTime = {};
         let alertGap = 5000; // 警报间隔5秒
-        let detectInterval = 200; // 检测间隔
+        let detectInterval = 500; // 检测间隔
         let animationId = null;
          // ==================== 请求权限 ====================
 async function requestPermission() {
@@ -632,7 +632,7 @@ async function getWalkingRoute(origin, destination) {
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                 
                 // 压缩图片发送
-                const imageData = canvas.toDataURL('image/jpeg', 0.7);
+                const imageData = canvas.toDataURL('image/jpeg', 0.5);
                 
                 // 发送检测请求
                 const response = await fetch(`${SERVER_URL}/detect`, {
