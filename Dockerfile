@@ -13,7 +13,6 @@ RUN apt-get update && apt-get install -y \
     libxcb-shape0 \
     libxcb-shm0 \
     libgl1 \
-    libgl1-mesa-glx \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
