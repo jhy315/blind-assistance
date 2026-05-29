@@ -798,7 +798,10 @@ async function getWalkingRoute(origin, destination) {
                 video.setAttribute('playsinline', 'true');
                 video.setAttribute('webkit-playsinline', 'true');
             }
-            
+            const cameraBtn = document.getElementById('cameraBtn'); // 换成你按钮实际的 ID
+            if (cameraBtn) {
+    cameraBtn.addEventListener('click', startCamera);
+}
             // 预加载语音
             if (synth) {
                 utterance.text = ' ';
@@ -837,17 +840,17 @@ async function getWalkingRoute(origin, destination) {
         font-weight: bold;
     ">🧭 语音导航</button>
 
-     <button onclick="startCamera()" style="
-        flex: 1;
-        margin: 0 10px;
-        padding: 16px;
-        background: #00ff88;
-        color: #000;
-        border: none;
-        border-radius: 12px;
-        font-size: 18px;
-        font-weight: bold;
-    ">📷 开启检测</button>
+   <button id="startCameraBtn" style="
+    flex: 1;
+    margin: 0 10px;
+    padding: 16px;
+    background: #00ff88;
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: bold;
+">📷 开启检测</button>
 </div>
 </body>
 </html>
